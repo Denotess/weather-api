@@ -41,3 +41,5 @@ Response:
 Cache key format is `weather:<normalized-location>` with a 30-minute TTL. If
 Redis is unavailable, the API will still call the upstream service and return
 fresh data.
+
+[Project Idea Link](https://roadmap.sh/projects/weather-api-wrapper-service)
