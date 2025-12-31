@@ -17,7 +17,12 @@ func Weather(ctx *gin.Context) {
 		log.Println("incorrect json body")
 		return
 	}
-	weatherData, err := helpers.GetWeatherData(ctx.Request.Context(), query.Location)
+	normalizedLocation, err := helpers.NormalizeLocation(query.Location)
+	if err != nil {
+		log.Println(err)
+		normalizedLocation = query.Location
+	}
+	weatherData, err := helpers.GetWeatherData(ctx.Request.Context(), normalizedLocation)
 	if err != nil {
 		if errors.Is(err, helpers.ErrLocationNotSet) {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
