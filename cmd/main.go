@@ -1,10 +1,10 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"weather-api/internal/helpers"
+	"weather-api/internal/handlers"
 
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
@@ -12,10 +12,8 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		fmt.Println(err)
 	}
-	data, err := helpers.GetWeatherData(context.Background())
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Printf("%.1f %s\n", data.CurrentConditions.Temp, data.CurrentConditions.Conditions)
+	router := gin.Default()
+	router.POST("/weather", handlers.Weather)
+
+	router.Run()
 }

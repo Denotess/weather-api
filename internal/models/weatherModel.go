@@ -6,3 +6,7 @@ type WeatherResponse struct {
 		Conditions string  `json:"conditions"`
 	} `json:"currentConditions"`
 }
+
+type UserQuery struct {
+	Location string `json:"location"`
+}

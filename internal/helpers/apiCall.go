@@ -12,7 +12,7 @@ import (
 	"weather-api/internal/models"
 )
 
-func GetWeatherData(ctx context.Context) (models.WeatherResponse, error) {
+func GetWeatherData(ctx context.Context, location string) (models.WeatherResponse, error) {
 	var data models.WeatherResponse
 
 	rawURL := os.Getenv("URL")
@@ -24,7 +24,7 @@ func GetWeatherData(ctx context.Context) (models.WeatherResponse, error) {
 		return data, fmt.Errorf("KEY env var not set")
 	}
 
-	callURL, err := buildCallURL(rawURL, key)
+	callURL, err := buildCallURL(rawURL, key, location)
 	if err != nil {
 		return data, err
 	}
@@ -56,18 +56,27 @@ func GetWeatherData(ctx context.Context) (models.WeatherResponse, error) {
 	return data, nil
 }
 
-func buildCallURL(rawURL, key string) (string, error) {
-	if strings.Contains(rawURL, "{KEY}") {
-		return strings.Replace(rawURL, "{KEY}", url.QueryEscape(key), 1), nil
-	}
-	if strings.Contains(rawURL, "%s") {
-		return strings.Replace(rawURL, "%s", url.QueryEscape(key), 1), nil
+func buildCallURL(rawURL, key, location string) (string, error) {
+	hasLocationPlaceholder := strings.Contains(rawURL, "{LOCATION}")
+	rawURL = strings.Replace(rawURL, "{KEY}", url.QueryEscape(key), 1)
+	rawURL = strings.Replace(rawURL, "%s", url.QueryEscape(key), 1)
+	rawURL = strings.Replace(rawURL, "{LOCATION}", url.PathEscape(location), 1)
+	if hasLocationPlaceholder && strings.TrimSpace(location) == "" {
+		return "", fmt.Errorf("location not set")
 	}
 
 	parsed, err := url.Parse(rawURL)
 	if err != nil {
 		return "", err
 	}
+
+	if strings.TrimSpace(location) != "" && !hasLocationPlaceholder {
+		if idx := strings.Index(parsed.Path, "/timeline/"); idx != -1 {
+			base := parsed.Path[:idx+len("/timeline/")]
+			parsed.Path = base + url.PathEscape(location)
+		}
+	}
+
 	q := parsed.Query()
 	if q.Get("key") == "" {
 		q.Set("key", key)
