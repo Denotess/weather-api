@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"context"
+	"errors"
 	"log"
 	"net/http"
 	"weather-api/internal/helpers"
@@ -17,9 +17,15 @@ func Weather(ctx *gin.Context) {
 		log.Println("incorrect json body")
 		return
 	}
-	weatherData, err := helpers.GetWeatherData(context.Background(), query.Location)
+	weatherData, err := helpers.GetWeatherData(ctx.Request.Context(), query.Location)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		if errors.Is(err, helpers.ErrLocationNotSet) {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			log.Println(err.Error())
+			return
+
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
 		log.Println(err.Error())
 		return
 	}

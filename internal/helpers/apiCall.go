@@ -3,14 +3,18 @@ package helpers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
+	"time"
 	"weather-api/internal/models"
 )
+
+var ErrLocationNotSet = errors.New("location not set")
 
 func GetWeatherData(ctx context.Context, location string) (models.WeatherResponse, error) {
 	var data models.WeatherResponse
@@ -34,7 +38,8 @@ func GetWeatherData(ctx context.Context, location string) (models.WeatherRespons
 		return data, err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
 	if err != nil {
 		return data, err
 	}
@@ -62,7 +67,7 @@ func buildCallURL(rawURL, key, location string) (string, error) {
 	rawURL = strings.Replace(rawURL, "%s", url.QueryEscape(key), 1)
 	rawURL = strings.Replace(rawURL, "{LOCATION}", url.PathEscape(location), 1)
 	if hasLocationPlaceholder && strings.TrimSpace(location) == "" {
-		return "", fmt.Errorf("location not set")
+		return "", ErrLocationNotSet
 	}
 
 	parsed, err := url.Parse(rawURL)
